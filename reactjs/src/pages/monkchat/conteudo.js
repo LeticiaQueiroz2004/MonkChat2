@@ -30,6 +30,8 @@ export default function Conteudo() {
     const navigation = useHistory();
     let usuarioLogado = lerUsuarioLogado(navigation);
 
+
+    const [idAlterando, setIdAlterando] = useState(0) 
     const [chat, setChat] = useState([]);
     const [sala, setSala] = useState('');
     const [usu, setUsu] = useState(usuarioLogado.nm_usuario);
@@ -61,11 +63,24 @@ export default function Conteudo() {
         if (!(event && event.ctrlKey && event.charCode == 13))
             return;
 
-        const resp = await api.inserirMensagem(sala, usu, msg);
-        if (!validarResposta(resp)) 
-            return;
-        
-        toast.dark('💕 Mensagem enviada com sucesso!');
+        if (idAlterando > 0 ) { 
+            const resp = await api.alterarMensagem(idAlterando, msg)
+            if (!validarResposta(resp)) 
+                return;
+            
+            toast.dark('💕 Mensagem alterada com sucesso!');
+            setIdAlterando(0)
+            setMsg('')
+            
+        } else {
+
+            const resp = await api.inserirMensagem(sala, usu, msg);
+            if (!validarResposta(resp)) 
+                return;
+            
+            toast.dark('💕 Mensagem enviada com sucesso!');
+            }
+
         await carregarMensagens();
     }
 
@@ -94,6 +109,11 @@ export default function Conteudo() {
         
         toast.dark('💕 Mensagem removida!');
         await carregarMensagens();
+    }
+
+    const editar = async (item) => {
+        setMsg(item.ds_mensagem)
+        setIdAlterando(item.id_chat)
     }
     
     return (
@@ -132,6 +152,7 @@ export default function Conteudo() {
                     {chat.map(x =>
                         <div key={x.id_chat}>
                             <div className="chat-message">
+                            <div> <img onClick={() => editar(x) } src="/assets/images/edit.svg" alt="" style={ {cursor: 'pointer'} }/> </div>
                                 <div> <img onClick={() => removerMensagem(x.id_chat) } src="/assets/images/delete.svg" alt="" style={ {cursor: 'pointer'} }/> </div>
                                 <div>({new Date(x.dt_mensagem.replace('Z', '')).toLocaleTimeString()})</div>
                                 <div><b>{x.tb_usuario.nm_usuario}</b> fala para <b>Todos</b>:</div>
